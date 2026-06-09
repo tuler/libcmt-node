@@ -1,0 +1,54 @@
+{
+    "name": "@cartesi/libcmt",
+    "version": "0.1.0",
+    "description": "Node.js bindings for libcmt, the Cartesi Machine guest rollup library",
+    "keywords": [
+        "cartesi",
+        "rollups",
+        "libcmt",
+        "riscv64"
+    ],
+    "license": "Apache-2.0",
+    "author": "Cartesi and individual authors (see AUTHORS)",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/cartesi/libcmt-node.git"
+    },
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "files": [
+        "AUTHORS",
+        "binding.gyp",
+        "lib/",
+        "src/",
+        "prebuilds/",
+        "deps/machine-guest-tools/sys-utils/libcmt/include/",
+        "deps/machine-guest-tools/sys-utils/libcmt/src/"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "scripts": {
+        "install": "node-gyp-build",
+        "build": "node-gyp rebuild",
+        "prebuild": "prebuildify --napi --strip",
+        "test": "node --test"
+    },
+    "dependencies": {
+        "node-addon-api": "^8.3.0",
+        "node-gyp-build": "^4.8.4"
+    },
+    "devDependencies": {
+        "node-gyp": "^11.0.0",
+        "prebuildify": "^6.0.1"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "binary": {
+        "napi_versions": [
+            8
+        ]
+    }
+}

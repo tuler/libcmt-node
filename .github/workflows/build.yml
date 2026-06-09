@@ -1,0 +1,178 @@
+# Copyright Cartesi and individual authors (see AUTHORS)
+# SPDX-License-Identifier: Apache-2.0
+#
+# NOTE: starting point, not yet exercised in CI. The riscv64 prebuild job in
+# particular needs the machine-linux-image headers version kept in sync with
+# deps/machine-guest-tools (see its Makefile LINUX_HEADERS_* variables).
+#
+# Releasing: bump "version" in package.json, then push a matching tag (vX.Y.Z).
+# The publish job verifies the tag, merges the prebuilds, smoke-tests the
+# packed tarball and publishes to npm with provenance. Requires the NPM_TOKEN
+# secret (granular automation token with publish rights to the @cartesi scope).
+name: Build
+on: [push]
+
+env:
+  LINUX_IMAGE_VERSION: v0.20.0
+  LINUX_VERSION: 6.5.13-ctsi-1
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install (compiles addon against the libcmt mock)
+        run: npm install
+
+      - name: Test
+        run: npm test
+
+  prebuild:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest # linux-x64
+          - os: ubuntu-24.04-arm # linux-arm64
+          - os: macos-13 # darwin-x64
+          - os: macos-latest # darwin-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - run: npm install --ignore-scripts
+      - run: npm run prebuild
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: prebuilds-${{ matrix.os }}
+          if-no-files-found: error
+          path: prebuilds/
+
+  prebuild-riscv64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install riscv64 cross toolchain and Cartesi Linux headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-riscv64-linux-gnu g++-riscv64-linux-gnu
+          wget -O /tmp/linux-libc-dev.deb \
+            "https://github.com/cartesi/machine-linux-image/releases/download/${LINUX_IMAGE_VERSION}/linux-libc-dev-riscv64-cross-${LINUX_VERSION}-${LINUX_IMAGE_VERSION}.deb"
+          sudo apt-get install -y --allow-downgrades /tmp/linux-libc-dev.deb
+
+      - name: Cross-build libcmt (real IO driver)
+        run: make -C deps/machine-guest-tools/sys-utils/libcmt libcmt TOOLCHAIN_PREFIX=riscv64-linux-gnu-
+
+      - run: npm install --ignore-scripts
+
+      - name: Prebuild riscv64 addon
+        env:
+          CC: riscv64-linux-gnu-gcc
+          CXX: riscv64-linux-gnu-g++
+          LIBCMT_LIB: ${{ github.workspace }}/deps/machine-guest-tools/sys-utils/libcmt/build/riscv64/libcmt.a
+        run: npx prebuildify --napi --strip --platform linux --arch riscv64
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: prebuilds-riscv64
+          if-no-files-found: error
+          path: prebuilds/
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, prebuild, prebuild-riscv64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Check tag matches package.json version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "tag ${GITHUB_REF_NAME} does not match package.json version ${VERSION}" >&2
+            exit 1
+          fi
+
+      - name: Merge prebuilds
+        uses: actions/download-artifact@v8
+        with:
+          pattern: prebuilds-*
+          merge-multiple: true
+          path: prebuilds/
+
+      - name: List prebuilds
+        run: ls -lR prebuilds/
+
+      - name: Pack
+        run: |
+          npm pack
+          TARBALL=$(ls cartesi-libcmt-*.tgz)
+          echo "TARBALL=${TARBALL}" >> "$GITHUB_ENV"
+          # the tarball must carry the prebuilds and the libcmt sources/headers
+          # needed for from-source fallback
+          tar -tzf "${TARBALL}" | grep -q 'package/prebuilds/linux-x64/'
+          tar -tzf "${TARBALL}" | grep -q 'package/prebuilds/linux-riscv64/'
+          tar -tzf "${TARBALL}" | grep -q 'package/deps/machine-guest-tools/sys-utils/libcmt/include/libcmt/rollup.h'
+          tar -tzf "${TARBALL}" | grep -q 'package/deps/machine-guest-tools/sys-utils/libcmt/src/rollup.c'
+
+      - name: Smoke-test packed tarball
+        run: |
+          mkdir /tmp/smoke && cd /tmp/smoke
+          npm init -y > /dev/null
+          npm install "${GITHUB_WORKSPACE}/${TARBALL}"
+          # the prebuild must be used: a from-source fallback leaves a build/ dir
+          test ! -d node_modules/@cartesi/libcmt/build
+          printf 'gio-reply' > reply.bin
+          CMT_INPUTS="42:reply.bin" node -e "
+            const assert = require('node:assert');
+            const { Rollup } = require('@cartesi/libcmt');
+            const rollup = new Rollup();
+            const response = rollup.gio({ domain: 1, id: '0x01' });
+            assert.equal(response.responseCode, 42);
+            assert.equal(response.responseData.toString(), 'gio-reply');
+            rollup.close();
+            console.log('smoke test passed');
+          "
+
+      - name: Publish to npm
+        run: npm publish "${TARBALL}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          prerelease: true
+          files: ${{ env.TARBALL }}

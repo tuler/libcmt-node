@@ -1,0 +1,3 @@
+[submodule "deps/machine-guest-tools"]
+	path = deps/machine-guest-tools
+	url = https://github.com/cartesi/machine-guest-tools
