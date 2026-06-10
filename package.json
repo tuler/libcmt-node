@@ -46,7 +46,7 @@
         "install": "node-gyp-build",
         "build": "node-gyp rebuild",
         "prebuild": "prebuildify --napi --strip",
-        "test": "node --test",
+        "test": "node --test \"test/*.test.mjs\"",
         "check:package": "attw --pack ."
     },
     "dependencies": {
