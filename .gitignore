@@ -7,3 +7,7 @@ prebuilds/
 
 # cartesi machine end-to-end test artifacts
 test/machine/work/
+
+# vocs documentation build output and cache
+/dist/
+.vocs/

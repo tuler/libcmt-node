@@ -71,6 +71,12 @@ The package is dual ESM + CommonJS — `const { Rollup } = require('@tuler/node-
 
 Failed libcmt calls throw an `Error` with the negative errno in `error.errno`.
 
+## Documentation
+
+Published at **<https://tuler.github.io/libcmt-node/>** (deployed by the [Docs workflow](.github/workflows/docs.yml) on every push to `main`).
+
+The site ([Vocs](https://vocs.dev)) has its pages in [`docs/pages/`](docs/pages/) and is configured by [`vocs.config.ts`](vocs.config.ts): `npm run docs:dev` / `docs:build` / `docs:preview`.
+
 ## Testing on the host (mock)
 
 The mock injects inputs from files listed in `CMT_INPUTS` and writes outputs to files named after the input:

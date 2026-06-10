@@ -1,0 +1,59 @@
+# Copyright Cartesi and individual authors (see AUTHORS)
+# SPDX-License-Identifier: Apache-2.0
+#
+# Builds the Vocs documentation site and publishes it to GitHub Pages.
+# Requires the repository's Pages source to be set to "GitHub Actions".
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # no submodules: the docs build never compiles the native addon
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # --ignore-scripts skips node-gyp-build (would need the libcmt submodule
+      # and a toolchain); the docs toolchain has no install scripts of its own
+      - run: npm ci --ignore-scripts
+
+      - name: Check twoslash blocks
+        run: npx vocs twoslash
+
+      - name: Build docs
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}
+        run: npm run docs:build
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

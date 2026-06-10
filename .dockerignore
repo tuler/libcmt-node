@@ -4,3 +4,6 @@ build
 prebuilds
 test/machine/work
 *.tgz
+docs
+dist
+.vocs

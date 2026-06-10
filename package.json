@@ -46,7 +46,10 @@
         "build": "node-gyp rebuild",
         "prebuild": "prebuildify --napi --strip",
         "test": "node --test \"test/*.test.mjs\"",
-        "check:package": "attw --pack ."
+        "check:package": "attw --pack .",
+        "docs:dev": "vite dev",
+        "docs:build": "vite build --app",
+        "docs:preview": "vocs preview"
     },
     "dependencies": {
         "node-addon-api": "^8.3.0",
@@ -54,8 +57,15 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.3",
+        "@types/node": "^25.9.2",
+        "@vitejs/plugin-react": "^6.0.2",
         "node-gyp": "^11.0.0",
-        "prebuildify": "^6.0.1"
+        "prebuildify": "^6.0.1",
+        "react-server-dom-webpack": "~19.2.4",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.16",
+        "vocs": "^2.0.12",
+        "waku": "1.0.0-beta.1"
     },
     "engines": {
         "node": ">=18"

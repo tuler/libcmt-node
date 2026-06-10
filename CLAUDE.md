@@ -19,6 +19,13 @@ npm run prebuild                   # prebuildify, writes prebuilds/<platform>-<a
 test/machine/run.sh                # e2e: riscv64 prebuild inside a real cartesi-machine (needs docker + cartesi-machine CLI; SKIP_PREBUILD=1/SKIP_ROOTFS=1 to reuse artifacts)
 ```
 
+Documentation site (Vocs): MDX pages in `docs/pages/`, configured by `vocs.config.ts` at the repo root (`srcDir: 'docs'`); deps are root devDependencies. Run `npm run docs:dev|docs:build|docs:preview`. Quirks (all stem from vocs running vite with `configFile: false` plus this package being CJS-rooted):
+- `docs:dev`/`docs:build` invoke `vite` directly so `vite.config.ts` is loaded; it replicates the vocs CLI (react + vocs plugins) and adds the `[name].js` entry-name + `dist/package.json` ESM-marker workaround (CJS root makes vite emit `.mjs`, but waku hardcodes `dist/server/build.js`).
+- `react-server-dom-webpack` must stay a direct devDependency or `docs:dev` fails with a `react-server` condition error ([vocs#450](https://github.com/wevm/vocs/issues/450)).
+- waku is pinned exactly (1.0.0-beta.1): beta.2 breaks vocs SSG (`contextMiddleware is not a function`).
+- Docs code blocks use twoslash (```ts twoslash) and must typecheck — verify with `npx vocs twoslash`. Package imports resolve via self-reference (the root `exports` map), which needs `typescript` and `@types/node` as root devDependencies; without a root `typescript`, attw's pinned `typescript@5.6.1-rc` gets hoisted and the twoslash checker fails with a lib-file mismatch.
+- Docs deploy to GitHub Pages (https://tuler.github.io/libcmt-node/) via `.github/workflows/docs.yml` on pushes to main: `renderStrategy: 'full-static'` emits HTML to `dist/public`, `BASE_PATH=/<repo>` sets the Pages subpath, and the job installs with `npm ci --ignore-scripts` (no addon compile, no submodules).
+
 ## Architecture
 
 Three layers, one native instance:
