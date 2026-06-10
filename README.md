@@ -1,4 +1,6 @@
-# @cartesi/libcmt
+# @tuler/node-libcmt
+
+> Temporarily published as `@tuler/node-libcmt` while it is not an official Cartesi package.
 
 Node.js bindings for [libcmt](https://github.com/cartesi/machine-guest-tools/tree/main/sys-utils/libcmt), the Cartesi Machine guest rollup library. It lets Node.js applications running inside a Cartesi Machine process rollup inputs (advances and inspects) and emit vouchers, notices, reports and exceptions — without going through the rollup HTTP server.
 
@@ -14,7 +16,7 @@ The API is **fully synchronous** on purpose: calls that wait on the emulator (`f
 ## Usage
 
 ```js
-import { Rollup } from '@cartesi/libcmt';
+import { Rollup } from '@tuler/node-libcmt';
 
 const rollup = new Rollup();
 await rollup.run({
@@ -48,7 +50,7 @@ for (;;) {
 
 Byte arguments accept `Buffer`, `Uint8Array` or 0x-prefixed hex strings. Addresses are returned as 0x-hex strings, payloads as `Buffer`, and numeric fields as `bigint`.
 
-The package is dual ESM + CommonJS — `const { Rollup } = require('@cartesi/libcmt')` works too, and both entry points share the same native addon instance.
+The package is dual ESM + CommonJS — `const { Rollup } = require('@tuler/node-libcmt')` works too, and both entry points share the same native addon instance.
 
 ### API
 
@@ -105,9 +107,9 @@ On riscv64 the addon does not compile libcmt; it links the static library instal
 1. Bump `version` in `package.json`.
 2. Tag the commit `vX.Y.Z` (must match the version) and push the tag.
 
-CI then builds prebuilds for linux-x64, linux-arm64, linux-riscv64, darwin-x64 and darwin-arm64, packs them into the tarball together with the libcmt sources (from-source fallback for other platforms), smoke-tests an install of the packed tarball, publishes to npm with provenance, and attaches the tarball to a GitHub release.
+CI then builds prebuilds for linux-x64, linux-arm64, linux-riscv64, darwin-x64 and darwin-arm64, packs them into the tarball together with the libcmt sources (from-source fallback for other platforms), smoke-tests an install of the packed tarball, publishes to npm, and attaches the tarball to a GitHub release.
 
-Requirements: the `NPM_TOKEN` repository secret (granular automation token with publish rights to the `@cartesi` scope). npm provenance requires the repository to be public; drop `publishConfig.provenance` to publish from a private repository.
+Publishing uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC): no npm token secret is required, and provenance attestations are generated automatically. The package on npmjs.com must have a Trusted Publisher configured pointing at this repository and the `build.yml` workflow. Note that npm only allows configuring a trusted publisher on an *existing* package, so the very first publish must be done manually (`npm publish` from a logged-in terminal).
 
 ## License
 

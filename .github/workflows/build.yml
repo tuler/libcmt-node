@@ -138,7 +138,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # create the GitHub release
-      id-token: write # npm provenance
+      id-token: write # npm trusted publishing (OIDC) + provenance
     steps:
       - uses: actions/checkout@v6
         with:
@@ -148,6 +148,10 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+
+      # trusted publishing (OIDC) requires npm >= 11.5.1; node 22 bundles npm 10
+      - name: Update npm
+        run: npm install -g npm@latest
 
       - name: Check tag matches package.json version
         run: |
@@ -170,7 +174,7 @@ jobs:
       - name: Pack
         run: |
           npm pack
-          TARBALL=$(ls cartesi-libcmt-*.tgz)
+          TARBALL=$(ls tuler-node-libcmt-*.tgz)
           echo "TARBALL=${TARBALL}" >> "$GITHUB_ENV"
           # the tarball must carry the prebuilds and the libcmt sources/headers
           # needed for from-source fallback
@@ -185,11 +189,11 @@ jobs:
           npm init -y > /dev/null
           npm install "${GITHUB_WORKSPACE}/${TARBALL}"
           # the prebuild must be used: a from-source fallback leaves a build/ dir
-          test ! -d node_modules/@cartesi/libcmt/build
+          test ! -d node_modules/@tuler/node-libcmt/build
           printf 'gio-reply' > reply.bin
           CMT_INPUTS="42:reply.bin" node -e "
             const assert = require('node:assert');
-            const { Rollup } = require('@cartesi/libcmt');
+            const { Rollup } = require('@tuler/node-libcmt');
             const rollup = new Rollup();
             const response = rollup.gio({ domain: 1, id: '0x01' });
             assert.equal(response.responseCode, 42);
@@ -198,10 +202,11 @@ jobs:
             console.log('smoke test passed');
           "
 
+      # authenticates via OIDC (trusted publishing): no token, provenance is
+      # generated automatically. Requires the trusted publisher configured on
+      # npmjs.com for @tuler/node-libcmt (repo tuler/libcmt-node, build.yml)
       - name: Publish to npm
         run: npm publish "${TARBALL}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - uses: softprops/action-gh-release@v3
         with:

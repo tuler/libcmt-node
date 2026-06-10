@@ -1,5 +1,5 @@
 {
-    "name": "@cartesi/libcmt",
+    "name": "@tuler/node-libcmt",
     "version": "0.1.0",
     "description": "Node.js bindings for libcmt, the Cartesi Machine guest rollup library",
     "keywords": [
@@ -12,7 +12,7 @@
     "author": "Cartesi and individual authors (see AUTHORS)",
     "repository": {
         "type": "git",
-        "url": "https://github.com/cartesi/libcmt-node.git"
+        "url": "https://github.com/tuler/libcmt-node.git"
     },
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
@@ -39,8 +39,7 @@
         "deps/machine-guest-tools/sys-utils/libcmt/src/"
     ],
     "publishConfig": {
-        "access": "public",
-        "provenance": true
+        "access": "public"
     },
     "scripts": {
         "install": "node-gyp-build",
