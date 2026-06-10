@@ -37,6 +37,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Check packaging (dual ESM + CJS)
+        run: npm run check:package
+
   prebuild:
     strategy:
       matrix:

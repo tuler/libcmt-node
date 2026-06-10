@@ -19,10 +19,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { createRequire } from 'node:module';
 
-const require = createRequire(import.meta.url);
-const { Rollup } = require('../lib/index.js');
+import { Rollup } from '../lib/index.mjs';
 
 // keep mock by-product files (none.gio-0.bin etc.) out of the repo
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'libcmt-node-'));

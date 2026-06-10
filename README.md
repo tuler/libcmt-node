@@ -14,7 +14,7 @@ The API is **fully synchronous** on purpose: calls that wait on the emulator (`f
 ## Usage
 
 ```js
-const { Rollup } = require('@cartesi/libcmt');
+import { Rollup } from '@cartesi/libcmt';
 
 const rollup = new Rollup();
 await rollup.run({
@@ -47,6 +47,8 @@ for (;;) {
 ```
 
 Byte arguments accept `Buffer`, `Uint8Array` or 0x-prefixed hex strings. Addresses are returned as 0x-hex strings, payloads as `Buffer`, and numeric fields as `bigint`.
+
+The package is dual ESM + CommonJS — `const { Rollup } = require('@cartesi/libcmt')` works too, and both entry points share the same native addon instance.
 
 ### API
 

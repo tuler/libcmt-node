@@ -16,6 +16,19 @@
     },
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./lib/index.d.mts",
+                "default": "./lib/index.mjs"
+            },
+            "require": {
+                "types": "./lib/index.d.ts",
+                "default": "./lib/index.js"
+            }
+        },
+        "./package.json": "./package.json"
+    },
     "files": [
         "AUTHORS",
         "binding.gyp",
@@ -33,13 +46,15 @@
         "install": "node-gyp-build",
         "build": "node-gyp rebuild",
         "prebuild": "prebuildify --napi --strip",
-        "test": "node --test"
+        "test": "node --test",
+        "check:package": "attw --pack ."
     },
     "dependencies": {
         "node-addon-api": "^8.3.0",
         "node-gyp-build": "^4.8.4"
     },
     "devDependencies": {
+        "@arethetypeswrong/cli": "^0.18.3",
         "node-gyp": "^11.0.0",
         "prebuildify": "^6.0.1"
     },
