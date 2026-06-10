@@ -1,0 +1,43 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+Node.js bindings (a Node-API native addon) for libcmt, the Cartesi Machine guest rollup library. It lets Node.js dapps running inside a Cartesi Machine process rollup inputs and emit vouchers/notices/reports without the rollup HTTP server.
+
+## Commands
+
+```sh
+git submodule update --init        # required once: libcmt sources live in deps/machine-guest-tools
+npm install                        # compiles the addon (or picks up a prebuild)
+npm test                           # node --test, runs test/ against the libcmt mock
+node --test --test-name-pattern "voucher" test/rollup.test.mjs   # single test
+npm run build                      # force recompile (node-gyp rebuild)
+npm run check:package              # attw --pack: validates dual ESM+CJS packaging
+npm run prebuild                   # prebuildify, writes prebuilds/<platform>-<arch>/
+```
+
+## Architecture
+
+Three layers, one native instance:
+
+- `src/addon.cc` — Node-API (node-addon-api) C++ wrapper exposing libcmt's C API as a `Rollup` ObjectWrap. **The whole API is synchronous on purpose**: blocking calls (`finish`, `gio`) yield the machine, pausing the entire guest including the Node event loop, so nothing could run concurrently anyway. Errors carry the negative errno in `error.errno`.
+- `lib/index.js` (CJS, the real implementation) — argument conversion (0x-hex strings / `Uint8Array` / `bigint` ⇄ Buffers), the `Rollup` class wrapping the native one, and the `run()` handler loop. Loads the addon via `node-gyp-build` (prefers `build/Release`, falls back to `prebuilds/`).
+- `lib/index.mjs` + `lib/index.d.mts` (ESM) — thin re-export wrappers over the CJS entry so both module systems share the single addon instance. The `exports` map in package.json routes `import`/`require` to the right pair. Any packaging change must keep `npm run check:package` (attw) green; CI enforces it.
+
+### Dual-target build (binding.gyp)
+
+The same addon source builds two flavors, selected by `target_arch`:
+
+- **riscv64** (inside the Cartesi Machine): links a prebuilt real-IO-driver `libcmt.a` (`LIBCMT_LIB` override; defaults to the one installed by the machine-guest-tools `.deb`). Does not compile libcmt sources.
+- **everything else** (development host): compiles libcmt's sources *including the mock IO driver* (`io-mock.c`) straight into the addon, from the `deps/machine-guest-tools` submodule (`LIBCMT_DIR` override, must resolve inside the package tree).
+
+The mock is driven by env vars: `CMT_INPUTS="0:advance.bin,1:inspect.bin"` injects inputs (reason 0 = advance, 1 = inspect, other = gio reply), `CMT_DEBUG=yes` logs verbosely. The mock writes output files next to the inputs — tests `chdir` to a tmpdir to keep them out of the repo. `test/rollup.test.mjs` contains a pure-JS EVM-ABI encoder for crafting `EvmAdvance` inputs.
+
+Only one `Rollup` instance may be open at a time (`-EBUSY`); `close()` the previous one first.
+
+## CI / Releasing (.github/workflows/build.yml)
+
+- Prebuilds are built for linux-x64, linux-arm64, darwin-x64 (`macos-15-intel` runner), darwin-arm64, and linux-riscv64. The riscv64 job cross-compiles: it needs the riscv64 cross toolchain, a libcmt cross-built with the Cartesi Linux headers (`LINUX_IMAGE_VERSION`/`LINUX_VERSION` workflow env must stay in sync with the submodule's Makefile `LINUX_HEADERS_*`), and `prebuildify --strip-bin riscv64-linux-gnu-strip` (host `strip` cannot process riscv64 ELF).
+- Releasing: bump `version` in package.json, push a matching `vX.Y.Z` tag. The publish job verifies the tag matches, merges prebuild artifacts, smoke-tests the packed tarball, and publishes to npm with provenance (requires the `NPM_TOKEN` secret).
