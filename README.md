@@ -80,6 +80,10 @@ CMT_INPUTS="0:advance.bin,1:inspect.bin" node my-dapp.js
 
 Reason `0` is advance (EVM-ABI encoded `EvmAdvance`), `1` is inspect (raw payload); any other reason is a gio reply with that response code. Set `CMT_DEBUG=yes` for verbose logging. See the [libcmt README](https://github.com/cartesi/machine-guest-tools/tree/main/sys-utils/libcmt#testing) for how to generate inputs with foundry's `cast`, or `test/rollup.test.mjs` here for a pure-JS encoder.
 
+## Testing inside a Cartesi Machine
+
+`test/machine/run.sh` tests the real riscv64 build end-to-end: it cross-builds the linux-riscv64 prebuild in Docker (mirroring CI), assembles a riscv64 Debian rootfs with Node.js and the packed package, boots it with [cartesi-machine](https://github.com/cartesi/machine-emulator), feeds ABI-encoded advance inputs and an inspect query via `--cmio-advance-state`/`--cmio-inspect-state`, and verifies the emitted outputs byte-for-byte. Requires Docker (with riscv64 emulation) and the `cartesi-machine` CLI (or set `CARTESI_MACHINE` to run it from the `cartesi/machine-emulator` docker image). Set `SKIP_PREBUILD=1`/`SKIP_ROOTFS=1` to reuse artifacts from a previous run. CI runs this in the `test-machine` job, reusing the prebuild built by `prebuild-riscv64`.
+
 ## Building
 
 libcmt sources are expected at `deps/machine-guest-tools` (git submodule in this repository). Override the location with `LIBCMT_DIR=/path/to/sys-utils/libcmt` (must resolve inside the package directory tree for gyp).

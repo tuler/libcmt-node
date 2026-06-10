@@ -4,3 +4,6 @@ prebuilds/
 *.bin
 *.tgz
 *.tsbuildinfo
+
+# cartesi machine end-to-end test artifacts
+test/machine/work/

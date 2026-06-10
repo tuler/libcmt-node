@@ -16,6 +16,7 @@ node --test --test-name-pattern "voucher" test/rollup.test.mjs   # single test
 npm run build                      # force recompile (node-gyp rebuild)
 npm run check:package              # attw --pack: validates dual ESM+CJS packaging
 npm run prebuild                   # prebuildify, writes prebuilds/<platform>-<arch>/
+test/machine/run.sh                # e2e: riscv64 prebuild inside a real cartesi-machine (needs docker + cartesi-machine CLI; SKIP_PREBUILD=1/SKIP_ROOTFS=1 to reuse artifacts)
 ```
 
 ## Architecture
@@ -39,5 +40,5 @@ Only one `Rollup` instance may be open at a time (`-EBUSY`); `close()` the previ
 
 ## CI / Releasing (.github/workflows/build.yml)
 
-- Prebuilds are built for linux-x64, linux-arm64, darwin-x64 (`macos-15-intel` runner), darwin-arm64, and linux-riscv64. The riscv64 job cross-compiles: it needs the riscv64 cross toolchain, a libcmt cross-built with the Cartesi Linux headers (`LINUX_IMAGE_VERSION`/`LINUX_VERSION` workflow env must stay in sync with the submodule's Makefile `LINUX_HEADERS_*`), and `prebuildify --strip-bin riscv64-linux-gnu-strip` (host `strip` cannot process riscv64 ELF).
+- Prebuilds are built for linux-x64, linux-arm64, darwin-x64 (`macos-15-intel` runner), darwin-arm64, and linux-riscv64. The `test-machine` job then runs the riscv64 prebuild end-to-end inside an emulated Cartesi Machine (test/machine/run.sh with the `cartesi/machine-emulator` docker image; needs `docker/setup-qemu-action` for the riscv64 rootfs build). The riscv64 job cross-compiles: it needs the riscv64 cross toolchain, a libcmt cross-built with the Cartesi Linux headers (`LINUX_IMAGE_VERSION`/`LINUX_VERSION` workflow env must stay in sync with the submodule's Makefile `LINUX_HEADERS_*`), and `prebuildify --strip-bin riscv64-linux-gnu-strip` (host `strip` cannot process riscv64 ELF).
 - Releasing: bump `version` in package.json, push a matching `vX.Y.Z` tag. The publish job verifies the tag matches, merges prebuild artifacts, smoke-tests the packed tarball, and publishes to npm with provenance (requires the `NPM_TOKEN` secret).
