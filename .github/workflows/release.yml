@@ -5,10 +5,12 @@
 # - with pending changesets: opens/updates the "Version Packages" PR
 #   (runs `changeset version`: bumps package.json, writes CHANGELOG.md).
 # - without pending changesets (i.e. the Version Packages PR was just
-#   merged): runs `changeset tag`, which creates and pushes the vX.Y.Z tag
-#   for the new version. Tags pushed with GITHUB_TOKEN do not trigger other
-#   workflows, so the last step explicitly dispatches build.yml on the new
-#   tag to run the prebuild + publish pipeline (publish is tag-gated there).
+#   merged): runs `changeset tag`, which creates the vX.Y.Z tag locally;
+#   the last step pushes it (the action itself only pushes tags when
+#   createGithubReleases is enabled). Tags pushed with GITHUB_TOKEN do not
+#   trigger other workflows, so the same step explicitly dispatches
+#   build.yml on the new tag to run the prebuild + publish pipeline
+#   (publish is tag-gated there).
 #
 # Requires "Allow GitHub Actions to create and approve pull requests" to be
 # enabled under Settings > Actions > General.
@@ -52,10 +54,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Trigger prebuild + publish pipeline on the new tag
+      # changesets/action only pushes tags when createGithubReleases is
+      # enabled (git.pushTag lives inside that branch), so with it disabled
+      # the tag created by `changeset tag` stays local — push it ourselves
+      - name: Push tag and trigger prebuild + publish pipeline
         if: steps.changesets.outputs.published == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          git push origin "v${VERSION}"
           gh workflow run build.yml --ref "v${VERSION}"
