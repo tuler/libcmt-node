@@ -1,16 +1,20 @@
 # Copyright Cartesi and individual authors (see AUTHORS)
 # SPDX-License-Identifier: Apache-2.0
 #
-# NOTE: starting point, not yet exercised in CI. The riscv64 prebuild job in
-# particular needs the machine-linux-image headers version kept in sync with
-# deps/machine-guest-tools (see its Makefile LINUX_HEADERS_* variables).
+# NOTE: the riscv64 prebuild job needs the machine-linux-image headers
+# version kept in sync with deps/machine-guest-tools (see its Makefile
+# LINUX_HEADERS_* variables).
 #
-# Releasing: bump "version" in package.json, then push a matching tag (vX.Y.Z).
-# The publish job verifies the tag, merges the prebuilds, smoke-tests the
-# packed tarball and publishes to npm with provenance. Requires the NPM_TOKEN
-# secret (granular automation token with publish rights to the @cartesi scope).
+# Releasing is driven by changesets (see release.yml): merging the
+# "Version Packages" PR creates the vX.Y.Z tag and dispatches this workflow
+# on it (workflow_dispatch, because GITHUB_TOKEN tag pushes don't trigger
+# workflows). The publish job verifies the tag, merges the prebuilds,
+# smoke-tests the packed tarball and publishes to npm via trusted
+# publishing (OIDC).
 name: Build
-on: [push]
+on:
+  push:
+  workflow_dispatch:
 
 env:
   LINUX_IMAGE_VERSION: v0.20.0

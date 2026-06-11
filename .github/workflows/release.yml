@@ -1,0 +1,61 @@
+# Copyright Cartesi and individual authors (see AUTHORS)
+# SPDX-License-Identifier: Apache-2.0
+#
+# Changesets release automation. On every push to main:
+# - with pending changesets: opens/updates the "Version Packages" PR
+#   (runs `changeset version`: bumps package.json, writes CHANGELOG.md).
+# - without pending changesets (i.e. the Version Packages PR was just
+#   merged): runs `changeset tag`, which creates and pushes the vX.Y.Z tag
+#   for the new version. Tags pushed with GITHUB_TOKEN do not trigger other
+#   workflows, so the last step explicitly dispatches build.yml on the new
+#   tag to run the prebuild + publish pipeline (publish is tag-gated there).
+#
+# Requires "Allow GitHub Actions to create and approve pull requests" to be
+# enabled under Settings > Actions > General.
+name: Release
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write # push the version commit and the vX.Y.Z tag
+  pull-requests: write # open/update the "Version Packages" PR
+  actions: write # dispatch build.yml on the new tag
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # full history: changeset version attributes changelog entries
+          # to the commits that added each changeset
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # --ignore-scripts: only @changesets/cli is needed, skip the addon build
+      - run: npm ci --ignore-scripts
+
+      - name: Create version PR or tag release
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npx changeset tag
+          # the publish job in build.yml creates the GitHub release
+          # (with the packed tarball attached)
+          createGithubReleases: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger prebuild + publish pipeline on the new tag
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          gh workflow run build.yml --ref "v${VERSION}"
