@@ -33,14 +33,12 @@ To call a contract, put the EVM calldata in `payload` — for example an ERC-20 
 import { Rollup } from '@tuler/node-libcmt';
 const rollup = new Rollup();
 // ---cut---
-const transferCalldata =
-    '0xa9059cbb' + // transfer(address,uint256) selector
-    'f39Fd6e51aad88F6F4ce6aB8827279cffFb92266'.padStart(64, '0') +
-    (10n ** 18n).toString(16).padStart(64, '0');
+const recipient = 'f39Fd6e51aad88F6F4ce6aB8827279cffFb92266'.padStart(64, '0');
+const amount = (10n ** 18n).toString(16).padStart(64, '0');
 
 rollup.emitVoucher({
     destination: '0x6B175474E89094C44Da98b954EedeAC495271d0F', // token contract
-    payload: transferCalldata,
+    payload: `0xa9059cbb${recipient}${amount}`, // transfer(address,uint256) selector + args
 });
 ```
 
@@ -101,6 +99,8 @@ rollup.emitNotice(new Uint8Array([1, 2, 3])); // Uint8Array
 - **Addresses** (`destination`, `msgSender`, …) must be exactly 20 bytes; as strings they are 0x-prefixed hex.
 - **256-bit values** (`value`) accept `bigint`, `number`, or 32 bytes.
 - Outgoing data is always `Buffer` (payloads) / `bigint` (numbers) / 0x-hex strings (addresses).
+
+Hex strings are typed as `` `0x${string}` `` ([`Hex`](/reference/types#input-types)), so values from [viem](https://viem.sh) — `Hex` from `encodeFunctionData`, `Address`, `bigint` from `parseEther` — pass in directly, and request addresses pass back into viem without casts.
 
 Invalid lengths or malformed hex throw `TypeError`/`RangeError` before anything reaches the device.
 
