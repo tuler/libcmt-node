@@ -16,14 +16,17 @@
 
 /// <reference types="node" />
 
+/** 0x-prefixed hex string. Compatible with viem's `Hex` and `Address`. */
+export type Hex = `0x${string}`;
+
 /** Bytes input: 0x-prefixed hex string, Buffer or Uint8Array. */
-export type BytesLike = string | Uint8Array;
+export type BytesLike = Hex | Uint8Array;
 
 /** EVM address: 0x-prefixed hex string (20 bytes), Buffer or Uint8Array. */
-export type AddressLike = string | Uint8Array;
+export type AddressLike = Hex | Uint8Array;
 
 /** Unsigned 256-bit value: bigint, number, or 32 bytes (hex string/Uint8Array). */
-export type U256Like = bigint | number | string | Uint8Array;
+export type U256Like = bigint | number | Hex | Uint8Array;
 
 export const ADDRESS_LENGTH: 20;
 export const U256_LENGTH: 32;
@@ -33,9 +36,9 @@ export interface AdvanceRequest {
     /** Network chain id. */
     chainId: bigint;
     /** Application contract address (0x-prefixed hex). */
-    appContract: string;
+    appContract: Hex;
     /** Input sender address (0x-prefixed hex). */
-    msgSender: string;
+    msgSender: Hex;
     /** Block number of this input. */
     blockNumber: bigint;
     /** Block timestamp of this input (UNIX epoch seconds). */

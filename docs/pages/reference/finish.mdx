@@ -32,9 +32,9 @@ type AdvanceRequest = {
     /** Network chain id. */
     chainId: bigint;
     /** Application contract address (0x-prefixed hex, 20 bytes). */
-    appContract: string;
+    appContract: `0x${string}`;
     /** Input sender address (0x-prefixed hex, 20 bytes). */
-    msgSender: string;
+    msgSender: `0x${string}`;
     /** L1 block number the input was included in. */
     blockNumber: bigint;
     /** L1 block timestamp (UNIX epoch seconds). */

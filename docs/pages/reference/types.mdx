@@ -8,6 +8,7 @@ import type {
     AdvanceRequest,
     BytesLike,
     GioResponse,
+    Hex,
     InspectRequest,
     RollupRequest,
     RunHandlers,
@@ -17,13 +18,13 @@ import type {
 
 ## Input types
 
-Three "like" types describe what the binding accepts and converts automatically — see [byte and number conventions](/guide/emitting-outputs#byte-and-number-conventions):
+Three "like" types describe what the binding accepts and converts automatically — see [byte and number conventions](/guide/emitting-outputs#byte-and-number-conventions). Hex strings are `Hex` (`` `0x${string}` ``), structurally identical to viem's `Hex`/`Address`:
 
 | Type | Accepts | Used for |
 | --- | --- | --- |
-| `BytesLike` | 0x-prefixed hex `string`, `Buffer`, `Uint8Array` | payloads, gio ids |
-| `AddressLike` | 0x-prefixed hex `string`, `Buffer`, `Uint8Array` (20 bytes) | voucher destinations |
-| `U256Like` | `bigint`, `number`, hex `string`, `Uint8Array` (32 bytes) | voucher values |
+| `BytesLike` | `Hex`, `Buffer`, `Uint8Array` | payloads, gio ids |
+| `AddressLike` | `Hex`, `Buffer`, `Uint8Array` (20 bytes) | voucher destinations |
+| `U256Like` | `bigint`, `number`, `Hex`, `Uint8Array` (32 bytes) | voucher values |
 
 ## Request types
 
