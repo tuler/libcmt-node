@@ -64,6 +64,24 @@ export interface GioResponse {
     responseData: Buffer;
 }
 
+/** Arguments for {@link Rollup.emitVoucher}. Encoded on-chain as `Voucher(address,uint256,bytes)`. */
+export interface Voucher {
+    /** Address the voucher executes against (20 bytes): an EOA for transfers, a contract for calls. */
+    destination: AddressLike;
+    /** Amount of wei sent with the execution. Default: `0n`. */
+    value?: U256Like;
+    /** EVM calldata to execute at `destination`. Default: empty (plain transfer). */
+    payload?: BytesLike;
+}
+
+/** Arguments for {@link Rollup.emitDelegateCallVoucher}. Encoded on-chain as `DelegateCallVoucher(address,bytes)`. */
+export interface DelegateCallVoucher {
+    /** Contract whose code runs in the application contract's storage context (20 bytes). */
+    destination: AddressLike;
+    /** Calldata for the delegate call. Default: empty. There is no `value` — `DELEGATECALL` cannot transfer ether. */
+    payload?: BytesLike;
+}
+
 export interface RunHandlers {
     advance?: (request: AdvanceRequest, rollup: Rollup) => boolean | void | Promise<boolean | void>;
     inspect?: (request: InspectRequest, rollup: Rollup) => boolean | void | Promise<boolean | void>;
@@ -87,10 +105,10 @@ export class Rollup {
     finish(options?: { accept?: boolean }): RollupRequest;
 
     /** Emit a voucher (Voucher(address,uint256,bytes)). Returns the output index. */
-    emitVoucher(voucher: { destination: AddressLike; value?: U256Like; payload?: BytesLike }): number;
+    emitVoucher(voucher: Voucher): number;
 
     /** Emit a delegate call voucher (DelegateCallVoucher(address,bytes)). Returns the output index. */
-    emitDelegateCallVoucher(voucher: { destination: AddressLike; payload?: BytesLike }): number;
+    emitDelegateCallVoucher(voucher: DelegateCallVoucher): number;
 
     /** Emit a notice (Notice(bytes)). Returns the output index. */
     emitNotice(payload: BytesLike): number;
