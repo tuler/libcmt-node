@@ -1,5 +1,11 @@
 # @tuler/node-libcmt
 
+## 0.1.3
+
+### Patch Changes
+
+- fc44942: using libcmt 0.17.2
+
 ## 0.1.2
 
 ### Patch Changes
