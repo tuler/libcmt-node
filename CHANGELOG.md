@@ -1,5 +1,14 @@
 # @tuler/node-libcmt
 
+## 0.1.4
+
+### Patch Changes
+
+- 6b33918: Export a `RollupError` class for failures raised by the libcmt binding. Failed
+  libcmt calls now throw a `RollupError` (instead of a plain `Error`) carrying the
+  negative `errno` and the failed call name in `syscall`. Argument validation
+  still throws `TypeError`/`RangeError`.
+
 ## 0.1.3
 
 ### Patch Changes
