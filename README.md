@@ -69,7 +69,7 @@ The package is dual ESM + CommonJS — `const { Rollup } = require('@tuler/node-
 | `close()` | Releases the device. |
 | `run({ advance, inspect })` | Convenience loop over `finish`; handlers may be async. Handler exceptions reject the input and are emitted as reports. |
 
-Failed libcmt calls throw an `Error` with the negative errno in `error.errno`.
+Failed libcmt calls throw a `RollupError` with the negative errno in `error.errno` and the failed call in `error.syscall`.
 
 ## Documentation
 

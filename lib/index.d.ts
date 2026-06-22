@@ -82,6 +82,21 @@ export interface DelegateCallVoucher {
     payload?: BytesLike;
 }
 
+/**
+ * Error thrown when a libcmt binding call fails (e.g. a too-large output, or
+ * constructing a second {@link Rollup} while one is open).
+ *
+ * Argument validation failures throw plain `TypeError`/`RangeError` instead,
+ * before anything reaches the device.
+ */
+export class RollupError extends Error {
+    readonly name: 'RollupError';
+    /** Negative errno reported by libcmt (e.g. `-16` for `EBUSY`). */
+    readonly errno: number;
+    /** Name of the libcmt call that failed (e.g. `cmt_rollup_init`). */
+    readonly syscall: string;
+}
+
 export interface RunHandlers {
     advance?: (request: AdvanceRequest, rollup: Rollup) => boolean | void | Promise<boolean | void>;
     inspect?: (request: InspectRequest, rollup: Rollup) => boolean | void | Promise<boolean | void>;

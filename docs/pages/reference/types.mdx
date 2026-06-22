@@ -1,6 +1,6 @@
 # Types & Constants
 
-Everything the package exports besides the [`Rollup`](/reference/rollup) class. All types are importable with `import type`:
+Everything the package exports besides the [`Rollup`](/reference/rollup) class (the `RollupError` class is documented under [Errors](#errors)). All types are importable with `import type`:
 
 ```ts twoslash
 import type {
@@ -88,11 +88,26 @@ U256_LENGTH;
 
 ## Errors
 
-Failed libcmt calls throw an `Error` with two extra properties:
+Failed libcmt calls throw a `RollupError` (a subclass of `Error`) with two extra properties:
 
 | Property | Type | Meaning |
 | --- | --- | --- |
 | `errno` | `number` | The negative errno from libcmt (e.g. `-16` for `EBUSY`) |
 | `syscall` | `string` | The libcmt call that failed (e.g. `cmt_rollup_init`) |
+
+`RollupError` is exported as a value, so it can be caught with `instanceof`:
+
+```ts twoslash
+import { Rollup, RollupError } from '@tuler/node-libcmt';
+
+try {
+    new Rollup();
+} catch (error) {
+    if (error instanceof RollupError) {
+        error.errno;
+        //    ^?
+    }
+}
+```
 
 Argument validation failures throw plain `TypeError` / `RangeError` before reaching the device.

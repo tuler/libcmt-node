@@ -20,7 +20,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { Rollup } from '../lib/index.mjs';
+import { Rollup, RollupError } from '../lib/index.mjs';
 
 // keep mock by-product files (none.gio-0.bin etc.) out of the repo
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'libcmt-node-'));
@@ -128,8 +128,16 @@ test('advance request, outputs and reports', async () => {
     // reports are raw
     assert.deepEqual(fs.readFileSync(path.join(dir, 'advance.report-0.bin')), reportPayload);
 
-    // no more inputs: finish throws
-    assert.throws(() => rollup.finish(), /cmt_rollup_finish failed/);
+    // no more inputs: finish throws a RollupError carrying the libcmt errno
+    assert.throws(
+        () => rollup.finish(),
+        (error) =>
+            error instanceof RollupError &&
+            /cmt_rollup_finish failed/.test(error.message) &&
+            typeof error.errno === 'number' &&
+            error.errno < 0 &&
+            error.syscall === 'cmt_rollup_finish',
+    );
 
     rollup.close();
     assert.throws(() => rollup.emitNotice(noticePayload), /closed/);
@@ -202,8 +210,14 @@ test('merkle save, reset and load', async () => {
 
     // only one instance may be open at a time: libcmt returns -EBUSY otherwise
     const another = new Rollup();
-    assert.throws(() => new Rollup(), /cmt_rollup_init failed/);
-    assert.throws(() => another.loadMerkle(path.join(tmp, 'missing', 'merkle.bin')), /cmt_rollup_load_merkle/);
+    assert.throws(
+        () => new Rollup(),
+        (error) => error instanceof RollupError && error.syscall === 'cmt_rollup_init' && error.errno === -16,
+    );
+    assert.throws(
+        () => another.loadMerkle(path.join(tmp, 'missing', 'merkle.bin')),
+        (error) => error instanceof RollupError && error.syscall === 'cmt_rollup_load_merkle',
+    );
     another.close();
 });
 

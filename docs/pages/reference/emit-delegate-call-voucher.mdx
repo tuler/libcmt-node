@@ -42,4 +42,4 @@ Calldata for the delegate call. There is no `value` parameter — `DELEGATECALL`
 | Condition | Error |
 | --- | --- |
 | `destination` not 20 bytes / malformed hex | `TypeError` |
-| Output larger than the machine's output buffer | `Error` with negative `errno` |
+| Output larger than the machine's output buffer | `RollupError` with negative `errno` |

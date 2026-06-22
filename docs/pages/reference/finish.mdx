@@ -71,5 +71,5 @@ The call is **synchronous and blocking on purpose**: yielding pauses the entire 
 
 | Condition | Error |
 | --- | --- |
-| No more inputs (mock) | `Error` with the negative errno in `errno` |
+| No more inputs (mock) | `RollupError` with the negative errno in `errno` |
 | Device closed | `Error` (`close()` was called) |

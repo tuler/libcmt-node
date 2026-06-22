@@ -21,5 +21,5 @@ const rollup = new Rollup();
 
 | Condition | Error |
 | --- | --- |
-| Device already open | `Error` with `errno: -16` (`EBUSY`) |
-| Device unavailable / driver failure | `Error` with the negative errno in `errno` and the libcmt call in `syscall` |
+| Device already open | `RollupError` with `errno: -16` (`EBUSY`) |
+| Device unavailable / driver failure | `RollupError` with the negative errno in `errno` and the libcmt call in `syscall` |

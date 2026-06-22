@@ -106,4 +106,4 @@ Invalid lengths or malformed hex throw `TypeError`/`RangeError` before anything 
 
 ## When libcmt fails
 
-Every method can throw an `Error` carrying the libcmt error code if the underlying call fails — for example emitting an output larger than the machine's output buffer. The negative errno is available on `error.errno` and the failed call name on `error.syscall`.
+Every method can throw a `RollupError` carrying the libcmt error code if the underlying call fails — for example emitting an output larger than the machine's output buffer. The negative errno is available on `error.errno` and the failed call name on `error.syscall`.

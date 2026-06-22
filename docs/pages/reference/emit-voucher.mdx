@@ -64,4 +64,4 @@ EVM calldata to execute at `destination`. Leave empty for a plain transfer.
 | --- | --- |
 | `destination` not 20 bytes / malformed hex | `TypeError` |
 | `value` negative or ≥ 2²⁵⁶ | `RangeError` |
-| Voucher larger than the machine's output buffer | `Error` with negative `errno` |
+| Voucher larger than the machine's output buffer | `RollupError` with negative `errno` |
