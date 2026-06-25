@@ -30,8 +30,8 @@ Documentation site (Vocs): MDX pages in `docs/pages/`, configured by `vocs.confi
 
 Three layers, one native instance:
 
-- `src/addon.cc` — Node-API (node-addon-api) C++ wrapper exposing libcmt's C API as a `Rollup` ObjectWrap. **The whole API is synchronous on purpose**: blocking calls (`finish`, `gio`) yield the machine, pausing the entire guest including the Node event loop, so nothing could run concurrently anyway. Errors carry the negative errno in `error.errno`.
-- `lib/index.js` (CJS, the real implementation) — argument conversion (0x-hex strings / `Uint8Array` / `bigint` ⇄ Buffers), the `Rollup` class wrapping the native one, and the `run()` handler loop. Loads the addon via `node-gyp-build` (prefers `build/Release`, falls back to `prebuilds/`).
+- `src/addon.cc` — Node-API (node-addon-api) C++ wrapper exposing libcmt v2's raw rollup C API as a `Rollup` ObjectWrap (`waitForInput`, `emitOutput`/`emitReport`/`emitException`, `progress`, `close` — no ABI encoding in C). **The whole API is synchronous on purpose**: blocking calls (`waitForInput`) yield the machine, pausing the entire guest including the Node event loop, so nothing could run concurrently anyway. Errors carry the negative errno in `error.errno`. libcmt v2 split rollup (raw I/O) from codec (ABI); this binding does all EVM-ABI encoding/decoding in JS instead of linking `codec.c`.
+- `lib/index.js` (CJS, the real implementation) — argument conversion (0x-hex strings / `Uint8Array` / `bigint` ⇄ Buffers), the `Rollup` class wrapping the native one, the `run()` handler loop, and the pure-JS EVM-ABI codec helpers (`decodeAdvance`, `encodeNotice`, `encodeVoucher`, `encodeDelegateCallVoucher`) that mirror libcmt's `codec.c` Output1..Output4 envelopes byte-for-byte. Loads the addon via `node-gyp-build` (prefers `build/Release`, falls back to `prebuilds/`).
 - `lib/index.mjs` + `lib/index.d.mts` (ESM) — thin re-export wrappers over the CJS entry so both module systems share the single addon instance. The `exports` map in package.json routes `import`/`require` to the right pair. Any packaging change must keep `npm run check:package` (attw) green; CI enforces it.
 
 ### Dual-target build (binding.gyp)
@@ -41,7 +41,7 @@ The same addon source builds two flavors, selected by `target_arch`:
 - **riscv64** (inside the Cartesi Machine): links a prebuilt real-IO-driver `libcmt.a` (`LIBCMT_LIB` override; defaults to the one installed by the machine-guest-tools `.deb`). Does not compile libcmt sources.
 - **everything else** (development host): compiles libcmt's sources *including the mock IO driver* (`io-mock.c`) straight into the addon, from the `deps/machine-guest-tools` submodule (`LIBCMT_DIR` override, must resolve inside the package tree).
 
-The mock is driven by env vars: `CMT_INPUTS="0:advance.bin,1:inspect.bin"` injects inputs (reason 0 = advance, 1 = inspect, other = gio reply), `CMT_DEBUG=yes` logs verbosely. The mock writes output files next to the inputs — tests `chdir` to a tmpdir to keep them out of the repo. `test/rollup.test.mjs` contains a pure-JS EVM-ABI encoder for crafting `EvmAdvance` inputs.
+The mock is driven by env vars: `CMT_INPUTS="0:advance.bin,1:inspect.bin"` injects inputs (reason 0 = advance, 1 = inspect), `CMT_DEBUG=yes` logs verbosely. The mock writes output files next to the inputs — tests `chdir` to a tmpdir to keep them out of the repo. `test/rollup.test.mjs` contains a pure-JS EVM-ABI encoder for crafting `EvmAdvance` inputs.
 
 Only one `Rollup` instance may be open at a time (`-EBUSY`); `close()` the previous one first.
 
