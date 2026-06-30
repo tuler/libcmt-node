@@ -1,5 +1,8 @@
 # @tuler/node-libcmt
 
+> [!IMPORTANT]
+> **This repository has moved to [`tuler/deroll`](https://github.com/tuler/deroll) and will be archived.** Please file issues and follow development there.
+
 > Temporarily published as `@tuler/node-libcmt` while it is not an official Cartesi package.
 
 Node.js bindings for [libcmt](https://github.com/cartesi/machine-guest-tools/tree/main/sys-utils/libcmt), the Cartesi Machine guest rollup library. It lets Node.js applications running inside a Cartesi Machine process rollup inputs (advances and inspects) and emit vouchers, notices, reports and exceptions — without going through the rollup HTTP server.
