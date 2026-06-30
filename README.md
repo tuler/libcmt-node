@@ -1,7 +1,7 @@
 # @tuler/node-libcmt
 
 > [!IMPORTANT]
-> **This repository has moved to [`tuler/deroll`](https://github.com/tuler/deroll) and will be archived.** Please file issues and follow development there.
+> **This repository has moved to [deroll](https://github.com/tuler/deroll) and is now published to the [@deroll/cmio](https://www.npmjs.com/package/@deroll/cmio/v/alpha) package. Please file issues and follow development there.**
 
 > Temporarily published as `@tuler/node-libcmt` while it is not an official Cartesi package.
 
